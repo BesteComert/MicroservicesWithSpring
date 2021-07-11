@@ -1,0 +1,47 @@
+server :
+  port : 9191
+
+
+cloud :
+  gateway :
+    routes :
+      - id : USER-SERVICE
+        url : lb://9002
+        predicates :
+          - Path = /users/**
+        filters:
+          - name : CircuitBreaker
+            args :
+              name: USER-SERVICE
+              fallbackuri: forward:/userServiceFallBack
+      - id : DEPARTMENT-SERVICE
+        url : lb://9001
+        predicates :
+          -Path = /departments/**
+        filters:
+          - name: CircuitBreaker
+            args:
+              name: DEPARTMENT-SERVICE
+              fallbackuri: forward:/departmentServiceFallBack
+
+
+hystrix:
+  command:
+    fallbackend:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds : 4000
+management :
+  endpoints :
+    web :
+      exposure :
+        include: hystrix.stream
+  eureka:
+    client:
+      register-with-eureka: true
+      fetch-registry: true
+      service-url:
+          defaultZone : http://localhost:8761/eureka/
+      instance:
+        hostname: localhost
